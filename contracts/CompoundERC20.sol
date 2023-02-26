@@ -6,6 +6,11 @@ import "./interface/compound.sol";
 
 import "hardhat/console.sol";
 
+//supply
+//redeem
+//borrow
+//repay
+
 contract CompoundERC20 {
     IERC20 public token;
     CErc20 public cToken;
@@ -65,5 +70,105 @@ contract CompoundERC20 {
     //Redeem function to sell the cToken
     function redeem(uint256 _amountCToken) external {
         require(cToken.redeem(_amountCToken) == 0, "Process failed");
+    }
+
+    //Borrow and Repay
+    //Mainnet Comptroller address
+    Comptroller public comptroller =
+        Comptroller(0x3d9819210A31b4961b30EF54bE2aeD79B9c9Cd3B);
+    //chainlink contract mainnet address
+    PriceFeed public priceFeed =
+        PriceFeed(0x922018674c12a7F0D394ebEEf9B58F186CdE13c1);
+
+    //Collateral
+    //It will return the percentage value of how much asset the user can borrow against the cToken they hold(in terms of USDC)
+    function getCollateral() external view returns (uint256) {
+        (bool isListed, uint256 colFactor, bool isComped) = comptroller.markets(
+            address(cToken)
+        );
+        require(isListed, "Token is not listed");
+        require(isComped, "Not eligible"); //whether or not the suppliers and borrowers of an asset are eligible to receive "COMP"
+        return colFactor; //divide this 1e18 to get value in percentage
+    }
+
+    //This function return, how much token user can borrow and it depends on the collateral factor
+    // sum of (supplied balance of market entered * col factor) - borrowed
+    function getAccountLiquidty() external view returns (uint256, uint256) {
+        (uint256 _error, uint256 _liquidity, uint256 _shortfall) = comptroller
+            .getAccountLiquidity(address(this));
+        require(
+            _error == 0,
+            "Sender either not authorized/Some internal factor is invalid"
+        );
+        require(_shortfall == 0, "Borrowed over limit"); //The account is currently below the collateral requirement
+        require(_liquidity > 0, "Can't borrow");
+        return (_liquidity, _shortfall);
+    }
+
+    //Get the price in USD with 6 decimal precision
+    function getPriceFeed(address _cToken) external view returns (uint256) {
+        //scaled by 1e18
+        return priceFeed.getUnderlyingPrice(_cToken);
+    }
+
+    //Enter the market Borrow
+    //Before borrowing first supply the token so that you can get ctoken to exchange
+    function borrow(address _cTokenToBorrow, uint256 _decimals) external {
+        //Enter the market before supply and borrow
+        address[] memory cTokens = new address[](1);
+        cTokens[0] = address(cToken);
+        uint256[] memory _errors = comptroller.enterMarkets(cTokens);
+        require(_errors[0] == 0, "enter market failed");
+        //check liquidity
+        (uint256 _error, uint256 _liquidity, uint256 _shortfall) = comptroller
+            .getAccountLiquidity(address(this));
+        require(
+            _error == 0,
+            "Sender either not authorized/Some internal factor is invalid"
+        );
+        require(_shortfall == 0, "Borrowed over limit"); //The account is currently below the collateral requirement
+        require(_liquidity > 0, "Can't borrow");
+
+        //calculate Max borrow
+        uint256 _priceFeed = priceFeed.getUnderlyingPrice(_cTokenToBorrow);
+        // liquidity - USD scaled up by 1e18
+        // price - USD scaled up by 1e18
+        // decimals - decimals of token to borrow
+        uint256 maxBorrow = (_liquidity * (10**_decimals)) / _priceFeed;
+        require(maxBorrow > 0, "Maxborrow = 0");
+
+        // borrow 50% of max borrow
+        uint256 amount = (maxBorrow * 50) / 100;
+        //Main Borrow Function
+        require(CErc20(_cTokenToBorrow).borrow(amount) == 0, "Failed");
+    }
+
+    //Borrowed balance
+    function getBorrowedBalance(address _cTokenBorrowed)
+        external
+        returns (uint256)
+    {
+        return CErc20(_cTokenBorrowed).borrowBalanceCurrent(address(this));
+    }
+
+    function getBorrowedRatePerBlock(address _cTokenBorrowed)
+        external
+        view
+        returns (uint256)
+    {
+        return CErc20(_cTokenBorrowed).borrowRatePerBlock();
+    }
+
+    //repay Borrowed Token
+    function repay(
+        address _tokenBorrowed,
+        address _cTokenBorrowed,
+        uint256 _amount
+    ) external {
+        IERC20(_tokenBorrowed).approve(_cTokenBorrowed, _amount);
+        require(
+            CErc20(_cTokenBorrowed).repayBorrow(_amount) == 0,
+            "repay failed"
+        );
     }
 }
