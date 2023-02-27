@@ -49,7 +49,7 @@ contract CompoundERC20 {
     function estimateBalanceofUnderlying() external returns (uint256) {
         uint256 ctokenBal = cToken.balanceOf(address(this));
         uint256 exchangeRate = cToken.exchangeRateCurrent();
-        uint256 decimals = 18; //DAI = 8 decimals
+        uint256 decimals = 18; //DAI = 18 decimals
         uint256 CtokenDecimal = 8;
         console.log(
             "Estimated Balance of Underlying:",
@@ -61,7 +61,7 @@ contract CompoundERC20 {
     //Direct method of getting balance
     function balanceUnderlying() external returns (uint256) {
         console.log(
-            "Direct Function Balance of CToken:",
+            "Direct Function Balance of cDAI:",
             cToken.balanceOfUnderlying(address(this))
         );
         return cToken.balanceOfUnderlying(address(this));
@@ -93,15 +93,13 @@ contract CompoundERC20 {
 
     //This function return, how much token user can borrow and it depends on the collateral factor
     // sum of (supplied balance of market entered * col factor) - borrowed
-    function getAccountLiquidty() external view returns (uint256, uint256) {
+    function getAccountLiquidity() external view returns (uint256, uint256) {
         (uint256 _error, uint256 _liquidity, uint256 _shortfall) = comptroller
             .getAccountLiquidity(address(this));
         require(
             _error == 0,
             "Sender either not authorized/Some internal factor is invalid"
         );
-        require(_shortfall == 0, "Borrowed over limit"); //The account is currently below the collateral requirement
-        require(_liquidity > 0, "Can't borrow");
         return (_liquidity, _shortfall);
     }
 
@@ -120,23 +118,20 @@ contract CompoundERC20 {
         uint256[] memory _errors = comptroller.enterMarkets(cTokens);
         require(_errors[0] == 0, "enter market failed");
         //check liquidity
-        (uint256 _error, uint256 _liquidity, uint256 _shortfall) = comptroller
-            .getAccountLiquidity(address(this));
+        (uint256 _error, uint256 _liquidity, uint256 _shortfall) = comptroller.getAccountLiquidity(address(this));  
         require(
             _error == 0,
             "Sender either not authorized/Some internal factor is invalid"
         );
         require(_shortfall == 0, "Borrowed over limit"); //The account is currently below the collateral requirement
         require(_liquidity > 0, "Can't borrow");
-
         //calculate Max borrow
         uint256 _priceFeed = priceFeed.getUnderlyingPrice(_cTokenToBorrow);
         // liquidity - USD scaled up by 1e18
         // price - USD scaled up by 1e18
         // decimals - decimals of token to borrow
-        uint256 maxBorrow = (_liquidity * (10**_decimals)) / _priceFeed;
+        uint256 maxBorrow = (_liquidity * (10**_decimals))/_priceFeed ;
         require(maxBorrow > 0, "Maxborrow = 0");
-
         // borrow 50% of max borrow
         uint256 amount = (maxBorrow * 50) / 100;
         //Main Borrow Function
@@ -148,6 +143,10 @@ contract CompoundERC20 {
         external
         returns (uint256)
     {
+        console.log(
+            "Borrowed Balance (cLINK):",
+            CErc20(_cTokenBorrowed).borrowBalanceCurrent(address(this))
+        );
         return CErc20(_cTokenBorrowed).borrowBalanceCurrent(address(this));
     }
 
@@ -166,9 +165,10 @@ contract CompoundERC20 {
         uint256 _amount
     ) external {
         IERC20(_tokenBorrowed).approve(_cTokenBorrowed, _amount);
+       console.log(CErc20(_cTokenBorrowed).repayBorrow(_amount));
         require(
             CErc20(_cTokenBorrowed).repayBorrow(_amount) == 0,
             "repay failed"
-        );
+        ); 
     }
 }

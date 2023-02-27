@@ -3,9 +3,9 @@ const { ethers } = require("hardhat");
 describe("Testing Supply and Redeem method of Compound", () => {
   let DAI, cToken, compound, compoundContract, daiToken, cDAIToken, signer;
   before("Getting Data", async () => {
-    //WBTC Token/Contract address
+    //DAI Token/Contract address
     DAI = "0x6B175474E89094C44Da98b954EedeAC495271d0F";
-    //cWBTC Token/Contract address from compound finance Document
+    //cDAI Token/Contract address 
     cToken = "0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643";
     //Getting Contract
     daiToken = await ethers.getContractAt("IERC20", DAI);
