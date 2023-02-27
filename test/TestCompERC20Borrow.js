@@ -37,10 +37,10 @@ describe("CompoundERC20", () => {
     const borrowRate = await compContract.getBorrowedRatePerBlock(cLINK);
     const tokenToBorrowBal = await linkToken.balanceOf(compContract.address);
     return {
-      colFactor: Number(_colFactor)/1e18 ,
+      colFactor: Number(_colFactor) / 1e18,
       liquidity: Number(_liquidity[0]),
-      priceFeed: Number(_priceFeed)/1e20,
-      MaxBorrow: (Number(_priceFeed) / 1e30 / (Number(_liquidity[0]) / 1e18)),
+      priceFeed: Number(_priceFeed) / 1e20,
+      MaxBorrow: Number(_priceFeed) / 1e30 / (Number(_liquidity[0]) / 1e18),
       borrowRate,
       tokenToBorrowBal,
     };
@@ -48,10 +48,10 @@ describe("CompoundERC20", () => {
 
   it("Borrow and Repay", async () => {
     console.log("-------CHECK THE BALANCE OF DAI & LINK--------");
-    console.log("DAI:",await daiToken.balanceOf(signer.address));
-    console.log("cDAI:",await cDAIToken.balanceOf(signer.address));
-    console.log("LINK:",await linkToken.balanceOf(signer.address));
-    console.log("cLINK:",await cLINKToken.balanceOf(signer.address));
+    console.log("DAI:", await daiToken.balanceOf(signer.address));
+    console.log("cDAI:", await cDAIToken.balanceOf(signer.address));
+    console.log("LINK:", await linkToken.balanceOf(signer.address));
+    console.log("cLINK:", await cLINKToken.balanceOf(signer.address));
     console.log("-----------------END--------------------");
 
     //Supplying DAI token
@@ -114,7 +114,10 @@ describe("CompoundERC20", () => {
     //Repay
     await linkToken.connect(signer).transfer(compContract.address, 10n ** 18n);
     //Amount:A value of -1 (i.e. 2^256 - 1) can be used to repay the full amount
+    const MAX_UINT = BigNumber.from(2).pow(256).sub(1);
     //Getting Error with this will fix it soon
-    await compContract.connect(signer).repay(linkToken.address, cLINK,"1");
+    await compContract
+      .connect(signer)
+      .repay(linkToken.address, cLINK, MAX_UINT);
   });
 });
