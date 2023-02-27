@@ -54,10 +54,12 @@ describe("CompoundERC20", () => {
     await compContract.connect(signer).supply({
       value: ethers.utils.parseEther("1"),
     });
-    const bal = await ethers.provider.getBalance(signer.address);
+    
+    const ethBal = await ethers.provider.getBalance(signer.address);
+    
     console.log("\n");
-    console.log("-------CHECK THE BALANCE OF DAI & LINK--------");
-    console.log("ETH:", ethers.utils.formatEther(bal.toString()));
+    console.log("-------CHECK THE BALANCE OF ETH & cETH--------");
+    console.log("ETH:", ethers.utils.formatEther(ethBal.toString()));
     console.log(
       "cETH of contract:",
       await cETHToken.balanceOf(compContract.address)
@@ -69,6 +71,8 @@ describe("CompoundERC20", () => {
         8
       )
     );
+    
+    
     console.log("\n");
     console.log("--------------Before Borrow---------------");
     const snapshotF = await snapshot(compContract, daiToken);
@@ -81,8 +85,12 @@ describe("CompoundERC20", () => {
     await compContract.getBorrowedBalance(cDAI);
     console.log("--------------END---------------");
     console.log("\n");
+    
+    
     //Borrow
     await compContract.connect(signer).borrow(cDAI, 8);
+    
+    
     console.log("--------------After Borrow---------------");
     const snapshotS = await snapshot(compContract, daiToken);
     console.log("Collateral Factor:", snapshotS.colFactor + "%");
@@ -99,13 +107,12 @@ describe("CompoundERC20", () => {
     );
     console.log("--------------END---------------");
 
-    console.log("\n");
-
     // Advance the block by 100 blocks
     for (let i = 0; i < 100; i++) {
       await ethers.provider.send("evm_increaseTime", [86400]); // 1 day in seconds
       await ethers.provider.send("evm_mine", []);
     }
+    
     console.log("\n");
     console.log("-----------Checking Interest------------");
     const snapshotT = await snapshot(compContract, daiToken);
@@ -118,13 +125,18 @@ describe("CompoundERC20", () => {
       await cETHToken.balanceOf(compContract.address)
     );
     console.log("----------------END----------------------");
+    
     //Repay
     const daiBal = await daiToken.balanceOf(signer.address);
     await daiToken.connect(signer).transfer(compContract.address, daiBal);
+    
     //Amount:A value of -1 (i.e. 2^256 - 1) can be used to repay the full amount
     const MAX_UINT = BigNumber.from(2).pow(256).sub(1);
-    //Getting Error with this will fix it soon
+    
+    //Repay Function
     await compContract.connect(signer).repay(daiToken.address, cDAI, MAX_UINT);
+    
+    
     console.log("\n");
     console.log("-----------After Repay Full Amount------------");
     const snapshotFF = await snapshot(compContract, daiToken);
