@@ -40,7 +40,7 @@ describe("CompoundERC20", () => {
       colFactor: Number(_colFactor) / 1e18,
       liquidity: Number(_liquidity[0]),
       priceFeed: Number(_priceFeed) / 1e20,
-      MaxBorrow: Number(_priceFeed) / 1e30 / (Number(_liquidity[0]) / 1e18),
+      MaxBorrow: _liquidity[0] / _priceFeed,
       borrowRate,
       tokenToBorrowBal,
     };

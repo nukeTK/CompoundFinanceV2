@@ -32,16 +32,16 @@ describe("CompoundERC20", () => {
     const tokenToBorrowBal = await daiToken.balanceOf(compContract.address);
     return {
       colFactor: Number(_colFactor) / 1e16,
-      liquidity: Number(_liquidity[0]),
+      liquidity: _liquidity[0],
       priceFeed: Number(_priceFeed) / 1e18,
-      MaxBorrow: Number(_priceFeed) / Number(_liquidity[0]),
+      MaxBorrow: _liquidity[0]/_priceFeed,
       borrowRate,
       tokenToBorrowBal,
     };
   };
 
   it("Borrow and Repay", async () => {
-    
+
     console.log("-------CHECK THE BALANCE OF ETH & cETH--------");
     console.log(
       "ETH:",
@@ -53,7 +53,7 @@ describe("CompoundERC20", () => {
 
     //Supplying DAI token
     await compContract.connect(signer).supply({
-      value: ethers.utils.parseEther("1"),
+      value: ethers.utils.parseEther("10"),
     });
     
     const ethBal = await ethers.provider.getBalance(signer.address);
@@ -79,6 +79,7 @@ describe("CompoundERC20", () => {
     const snapshotF = await snapshot(compContract, daiToken);
     console.log("Collateral Factor:", snapshotF.colFactor + "%");
     console.log("Liquidity:", snapshotF.liquidity);
+    console.log("Max Borrow:", Number(snapshotF.MaxBorrow));
     console.log("Price of cDAI in Dollar:", snapshotF.priceFeed);
     console.log("Borrow Rate Per Block:", Number(snapshotF.borrowRate));
     await compContract.balanceOfUnderlying();
@@ -96,9 +97,9 @@ describe("CompoundERC20", () => {
     const snapshotS = await snapshot(compContract, daiToken);
     console.log("Collateral Factor:", snapshotS.colFactor + "%");
     console.log("Liquidity:", snapshotS.liquidity);
+    console.log("Max Borrow:", Number(snapshotS.MaxBorrow));
     console.log("Price of cDAI in Dollar:", snapshotS.priceFeed);
     console.log("Borrow Rate Per Block:", Number(snapshotS.borrowRate));
-    console.log("Max Borrow:", Number(snapshotS.MaxBorrow));
     await compContract.balanceOfUnderlying();
     console.log("DAI Balance in Contract:", Number(snapshotS.tokenToBorrowBal));
     await compContract.getBorrowedBalance(cDAI);
@@ -121,10 +122,6 @@ describe("CompoundERC20", () => {
     console.log("Max Borrow:", Number(snapshotT.MaxBorrow));
     console.log("DAI Balance in Contract:", Number(snapshotT.tokenToBorrowBal));
     await compContract.getBorrowedBalance(cDAI);
-    console.log(
-      "cETH of Contract:",
-      await cETHToken.balanceOf(compContract.address)
-    );
     console.log("----------------END----------------------");
     
     //Repay
@@ -145,10 +142,6 @@ describe("CompoundERC20", () => {
     console.log("Max Borrow:", snapshotFF.MaxBorrow);
     console.log("DAI Balance in Contract:", snapshotF.tokenToBorrowBal);
     await compContract.getBorrowedBalance(cDAI);
-    console.log(
-      "cETH of Contract:",
-      await cETHToken.balanceOf(compContract.address)
-    );
     console.log("----------------END----------------------");
   });
 });
