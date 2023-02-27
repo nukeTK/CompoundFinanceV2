@@ -55,7 +55,7 @@ describe("CompoundERC20", () => {
     console.log("-----------------END--------------------");
 
     //Supplying DAI token
-    const amountDeposited = 10n ** 16n;
+    const amountDeposited = 10n ** 18n;
     await daiToken
       .connect(signer)
       .approve(compContract.address, amountDeposited);
@@ -120,4 +120,5 @@ describe("CompoundERC20", () => {
       .connect(signer)
       .repay(linkToken.address, cLINK, MAX_UINT);
   });
+  
 });
