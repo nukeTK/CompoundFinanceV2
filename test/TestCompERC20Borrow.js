@@ -115,7 +115,7 @@ describe("CompoundERC20", () => {
     await linkToken.connect(signer).transfer(compContract.address, 10n ** 18n);
     //Amount:A value of -1 (i.e. 2^256 - 1) can be used to repay the full amount
     const MAX_UINT = BigNumber.from(2).pow(256).sub(1);
-    //Getting Error with this will fix it soon
+   
     await compContract
       .connect(signer)
       .repay(linkToken.address, cLINK, MAX_UINT);
