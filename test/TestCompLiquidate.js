@@ -10,8 +10,6 @@ describe("Compound Liquidate Test", () => {
     cETHToken,
     comp,
     compContract,
-    signer,
-    signer1,
     liquidate,
     liquidateContract;
   before("Initialize", async () => {
