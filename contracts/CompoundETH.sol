@@ -7,49 +7,58 @@ import "./interface/compound.sol";
 import "hardhat/console.sol";
 
 contract CompoundETH {
-  CEth public cToken;
+    CEth public cToken;
 
-  constructor(address _cToken) {
-    cToken = CEth(_cToken);
-  }
+    constructor(address _cToken) {
+        cToken = CEth(_cToken);
+    }
 
-  receive() external payable {}
+    receive() external payable {}
 
-  function supply() external payable {
-    cToken.mint{value: msg.value}();
-  }
+    function supply() external payable {
+        cToken.mint{value: msg.value}();
+    }
 
-  function getCTokenBalance() external view returns (uint) {
-    return cToken.balanceOf(address(this));
-  }
+    function getCTokenBalance() external view returns (uint256) {
+        return cToken.balanceOf(address(this));
+    }
 
-  // not view function
-  function getInfo() external returns (uint exchangeRate, uint supplyRate) {
-    // Amount of current exchange rate from cToken to underlying
-    exchangeRate = cToken.exchangeRateCurrent();
-    // Amount added to you supply balance this block
-    supplyRate = cToken.supplyRatePerBlock();
-  }
+    // not view function
+    function getInfo()
+        external
+        returns (uint256 exchangeRate, uint256 supplyRate)
+    {
+        // Amount of current exchange rate from cToken to underlying
+        exchangeRate = cToken.exchangeRateCurrent();
+        // Amount added to you supply balance this block
+        supplyRate = cToken.supplyRatePerBlock();
+    }
 
-  // not view function
-  function estimateBalanceOfUnderlying() external returns (uint) {
-    uint cTokenBal = cToken.balanceOf(address(this));
-    uint exchangeRate = cToken.exchangeRateCurrent();
-    uint decimals = 18; // DAI = 18 decimals
-    uint cTokenDecimals = 8;
+    // not view function
+    function estimateBalanceOfUnderlying() external returns (uint256) {
+        uint256 cTokenBal = cToken.balanceOf(address(this));
+        uint256 exchangeRate = cToken.exchangeRateCurrent();
+        uint256 decimals = 18; // DAI = 18 decimals
+        uint256 cTokenDecimals = 8;
 
-    return (cTokenBal * exchangeRate) / 10**(18 + decimals - cTokenDecimals);
-  }
+        return
+            (cTokenBal * exchangeRate) / 10**(18 + decimals - cTokenDecimals);
+    }
 
-  // not view function
-  function balanceOfUnderlying() external returns (uint) {
-    return cToken.balanceOfUnderlying(address(this));
-  }
+    // not view function
+    function balanceOfUnderlying() external returns (uint256) {
+        console.log(
+            "balance Of cToken",
+            cToken.balanceOfUnderlying(address(this)) / 1e18
+        );
+        return cToken.balanceOfUnderlying(address(this));
+    }
 
-  function redeem(uint _cTokenAmount) external {
-    require(cToken.redeem(_cTokenAmount) == 0, "redeem failed");
-    // cToken.redeemUnderlying(underlying amount);
-  }
+    function redeem(uint256 _cTokenAmount) external {
+        require(cToken.redeem(_cTokenAmount) == 0, "redeem failed");
+        // cToken.redeemUnderlying(underlying amount);
+    }
+
     //Borrow and Repay
     //Mainnet Comptroller address
     Comptroller public comptroller =
@@ -96,7 +105,8 @@ contract CompoundETH {
         uint256[] memory _errors = comptroller.enterMarkets(cTokens);
         require(_errors[0] == 0, "enter market failed");
         //check liquidity
-        (uint256 _error, uint256 _liquidity, uint256 _shortfall) = comptroller.getAccountLiquidity(address(this));  
+        (uint256 _error, uint256 _liquidity, uint256 _shortfall) = comptroller
+            .getAccountLiquidity(address(this));
         require(
             _error == 0,
             "Sender either not authorized/Some internal factor is invalid"
@@ -108,7 +118,7 @@ contract CompoundETH {
         // liquidity - USD scaled up by 1e18
         // price - USD scaled up by 1e18
         // decimals - decimals of token to borrow
-        uint256 maxBorrow = (_liquidity * (10**_decimals))/_priceFeed ;
+        uint256 maxBorrow = (_liquidity * (10**_decimals)) / _priceFeed;
         require(maxBorrow > 0, "Maxborrow = 0");
         // borrow 50% of max borrow
         uint256 amount = (maxBorrow * 50) / 100;
@@ -146,6 +156,6 @@ contract CompoundETH {
         require(
             CErc20(_cTokenBorrowed).repayBorrow(_amount) == 0,
             "repay failed"
-        ); 
+        );
     }
 }

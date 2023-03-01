@@ -51,7 +51,7 @@ describe("CompoundERC20", () => {
     );
     console.log("-----------------END--------------------");
 
-    //Supplying DAI token
+    //Supplying ETH token
     await compContract.connect(signer).supply({
       value: ethers.utils.parseEther("10"),
     });
