@@ -39,17 +39,8 @@ contract TestCompoundLiquidate {
         return cTokenSupply.balanceOf(address(this));
     }
 
-    // not view function
-    function getSupplyBalance() external returns (uint256) {
-        console.log(
-            "Supply Balance Of cETH:",
-            cTokenSupply.balanceOfUnderlying(address(this))/1e18
-        );
-        return cTokenSupply.balanceOfUnderlying(address(this));
-    }
-
     //Collateral
-    //It will return the percentage value of how much asset the user can borrow against the cToken they hold(in terms of USDC)
+    //It will return the percentage value of how much asset the user can borrow against the cToken they hold
     function getCollateral() external view returns (uint256) {
         (, uint256 colFactor, ) = comptroller.markets(address(cTokenSupply));
         return colFactor; //divide this 1e18 to get value in percentage
@@ -87,15 +78,15 @@ contract TestCompoundLiquidate {
     }
 
     //Borrowed balance
-    function getBorrowedBalance(address _cTokenBorrowed)
+    function getBorrowedBalance()
         external
         returns (uint256)
     {
         console.log(
             "Borrowed Balance (cDAI):",
-            CErc20(_cTokenBorrowed).borrowBalanceCurrent(address(this))
+            cTokenBorrow.borrowBalanceCurrent(address(this))
         );
-        return CErc20(_cTokenBorrowed).borrowBalanceCurrent(address(this));
+        return cTokenBorrow.borrowBalanceCurrent(address(this));
     }
 }
 

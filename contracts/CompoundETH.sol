@@ -68,7 +68,7 @@ contract CompoundETH {
         PriceFeed(0x922018674c12a7F0D394ebEEf9B58F186CdE13c1);
 
     //Collateral
-    //It will return the percentage value of how much asset the user can borrow against the cToken they hold(in terms of USDC)
+    //It will return the percentage value of how much asset the user can borrow against the cToken they hold
     function getCollateral() external view returns (uint256) {
         (bool isListed, uint256 colFactor, bool isComped) = comptroller.markets(
             address(cToken)

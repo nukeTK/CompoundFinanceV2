@@ -1,5 +1,5 @@
-const { BigNumber } = require("ethers");
 const { ethers } = require("hardhat");
+const  BN  = require("bn.js");
 
 describe("Compound Liquidate Test", () => {
   let DAI,
@@ -29,7 +29,7 @@ describe("Compound Liquidate Test", () => {
   });
   const snapshot = async (compContract, liquidateContract) => {
     const colFactor = await compContract.getCollateral();
-    const liquidity= await compContract.getAccountLiquidity();
+    const liquidity = await compContract.getAccountLiquidity();
     const price = await compContract.getPriceFeed(cDAI);
     /*const closeFactor = await liquidateContract.getCloseFactor();
     const incentive = await liquidateContract.getLiquidationIncentive();
@@ -39,11 +39,11 @@ describe("Compound Liquidate Test", () => {
 
     return {
       colFactor: colFactor / 1e16,
-    //  supplied: supplied.div(pow(10, SUPPLY_DECIMALS - 2)) / 100,
-    //  borrowed: borrowed.div(pow(10, BORROW_DECIMALS - 2)) / 100,
-   //   price: price.div(pow(10, 18 - 2)) / 100,
-      liquidity: liquidity[0]/1e18,
-      shortfall: liquidity[1]/1e18,
+      //  supplied: supplied.div(pow(10, SUPPLY_DECIMALS - 2)) / 100,
+      //  borrowed: borrowed.div(pow(10, BORROW_DECIMALS - 2)) / 100,
+      //   price: price.div(pow(10, 18 - 2)) / 100,
+      liquidity: liquidity[0],
+      shortfall: liquidity[1],
       /*  closeFactor: closeFactor.div(pow(10, 18 - 2)),
       incentive: incentive.div(pow(10, 18 - 2)) / 100,
       liquidated: liquidated.div(pow(10, SUPPLY_DECIMALS - 4)) / 10000, */
@@ -58,7 +58,6 @@ describe("Compound Liquidate Test", () => {
     snapF = await snapshot(compContract, liquidateContract);
     console.log(`---CHECKING BALANCE AFTER SUPPLY---`);
     console.log(`Collateral factor: ${snapF.colFactor} %`);
-    await compContract.getSupplyBalance();
     console.log("----------END------------");
     console.log("\n");
 
@@ -68,29 +67,32 @@ describe("Compound Liquidate Test", () => {
     //Borrow
     const liquidity = await compContract.getAccountLiquidity();
     let price = await compContract.getPriceFeed(cDAI);
-    const maxBorrow = liquidity[0] / price;
+    const maxBorrow = liquidity[0] *(10 **18)/price;
+    const borrowAmount = (maxBorrow * 9997) / 10000;
+    console.log(maxBorrow/1e18) 
+    console.log(borrowAmount);
     console.log("---------------Enter the Market------------");
-    console.log("Liquidity in Dollar: $", (liquidity[0] / 1e18).toFixed());
-    console.log("MaxBorrow in Dollar: $", maxBorrow.toFixed());
+    console.log("Liquidity in Dollar: $", liquidity[0]);
+    // console.log("MaxBorrow in Dollar: $", maxBorrow.toFixed());
     console.log("---------------END-------------------");
     console.log("\n");
-     // NOTE: tweak borrow amount for testing 
-    const borrowAmount = ((maxBorrow.toFixed()) * 9997)/10000;
-    //Borrow function
-    await compContract.connect(supplyAccount).borrow(borrowAmount.toFixed());
-    console.log(await ethers.provider.getBlockNumber());
     
-    for (let i = 0; i < 1000; i++) {
+    // NOTE: tweak borrow amount for testing
+    //const borrowAmount = (maxBorrow.toFixed() * 9997) / 10000;
+    //Borrow function
+    await compContract.connect(supplyAccount).borrow(borrowAmount);
+    // await compContract.getBorrowedBalance();
+    await compContract.getBorrowedBalance();
+
+    for (let i = 0; i < 20000; i++) {
       await ethers.provider.send("evm_increaseTime", [86400]); // 1 day in seconds
       await ethers.provider.send("evm_mine", []);
     }
-    console.log(await ethers.provider.getBlockNumber());
+
+    await compContract.getBorrowedBalance();
     snapS = await snapshot(compContract, liquidateContract);
     console.log("--------After Few Blocks---------");
-    await compContract.getBorrowedBalance(cDAI);
-    console.log(`liquidity: $ ${snapS.liquidity.toFixed()}`)
-    console.log(`shortfall: $ ${snapS.shortfall.toFixed()}`)
-    await compContract.getBorrowedBalance(cDAI);
-
+    console.log(`liquidity: $ ${snapS.liquidity}`);
+    console.log(`shortfall: $ ${snapS.shortfall}`);
   });
 });
