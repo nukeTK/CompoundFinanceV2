@@ -35,8 +35,12 @@ contract TestCompoundLiquidate {
         cTokenSupply.mint{value: msg.value}();
     }
 
-    function getCTokenBalance() external view returns (uint256) {
-        return cTokenSupply.balanceOf(address(this));
+    function getSupplyBalance() external returns (uint256) {
+        console.log(
+            "balance Of Supply Token:",
+            (cTokenSupply.balanceOfUnderlying(address(this))) / 1e18
+        );
+        return cTokenSupply.balanceOfUnderlying(address(this));
     }
 
     //Collateral
@@ -78,13 +82,10 @@ contract TestCompoundLiquidate {
     }
 
     //Borrowed balance
-    function getBorrowedBalance()
-        external
-        returns (uint256)
-    {
+    function getBorrowedBalance() external returns (uint256) {
         console.log(
             "Borrowed Balance (cDAI):",
-            cTokenBorrow.borrowBalanceCurrent(address(this))
+            (cTokenBorrow.borrowBalanceCurrent(address(this)))
         );
         return cTokenBorrow.borrowBalanceCurrent(address(this));
     }
@@ -109,7 +110,7 @@ contract CompoundLiquidate {
     // liquidation incentive
     //Maximum percentage of borrow token can be repaid
     function getCloseFactor() external view returns (uint256) {
-        return comptroller.liquidationIncentiveMantissa(); //for percentage divided by 1e18
+        return comptroller.closeFactorMantissa(); //for percentage divided by 1e18
     }
 
     // liquidation incentive
@@ -132,13 +133,13 @@ contract CompoundLiquidate {
          *  seizeTokens = seizeAmount / exchangeRate
          *   = actualRepayAmount * (liquidationIncentive * priceBorrowed) / (priceCollateral * exchangeRate)
          */
+
         (uint256 error, uint256 cTokenCollateralAmount) = comptroller
             .liquidateCalculateSeizeTokens(
                 _cTokenBorrowed,
                 _cTokenCollateral,
                 _actualRepayAmount
             );
-
         require(error == 0, "error");
 
         return cTokenCollateralAmount;

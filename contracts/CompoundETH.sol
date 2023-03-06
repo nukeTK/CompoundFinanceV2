@@ -6,6 +6,11 @@ import "./interface/compound.sol";
 
 import "hardhat/console.sol";
 
+//supply 
+//redeem
+//borrow
+//repay
+
 contract CompoundETH {
     CEth public cToken;
 
