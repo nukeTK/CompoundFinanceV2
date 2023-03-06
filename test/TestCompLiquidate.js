@@ -114,7 +114,7 @@ describe("Compound Liquidate Test", () => {
 
     const amountToBeLiquidated = await liquidateContract
       .connect(Liquidator)
-      .getAmountToBeLiquidated(DAI, cDAI, repayAmount);
+      .getAmountToBeLiquidated(cETH, cDAI, repayAmount);
     console.log("Amount To be Liquidated:", amountToBeLiquidated / 1e18);
 
     await tokenBorrow
