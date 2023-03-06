@@ -33,6 +33,7 @@ describe("Compound Liquidate Test", () => {
 
     [Liquidator, supplyAccount] = await ethers.getSigners();
   });
+
   const snapshot = async (compContract, liquidateContract) => {
     const colFactor = await compContract.getCollateral();
     const liquidity = await compContract.getAccountLiquidity();
@@ -93,7 +94,7 @@ describe("Compound Liquidate Test", () => {
       await ethers.provider.send("evm_mine", []);
     }
 
-    console.log("--BORROWED BAL BEFORE MINING BLOCK--");
+    console.log("--BORROWED BAL AFTER MINING BLOCK--");
     await compContract.getBorrowedBalance();
     console.log("\n");
     snapS = await snapshot(compContract, liquidateContract);
@@ -101,10 +102,11 @@ describe("Compound Liquidate Test", () => {
     console.log(`liquidity: $ ${snapS.liquidity / 1e18}`);
     console.log(`shortfall: $ ${snapS.shortfall / 1e18}`);
     console.log("\n");
+
     //LIQUIDATE
     const closeFactor = await liquidateContract.getCloseFactor();
 
-    const borrowedBalance = await compContract.getBorrowedBalance();
+    const borrowedBalance = await compContract.callStatic.getBorrowedBalance();
 
     const amt = BigNumber.from(borrowedBalance).mul(closeFactor);
     const repayAmount = BigNumber.from(amt).div(1000000000000000000n);
@@ -117,7 +119,7 @@ describe("Compound Liquidate Test", () => {
       .getAmountToBeLiquidated(cETH, cDAI, repayAmount);
     console.log("Amount To be Liquidated:", amountToBeLiquidated / 1e18);
 
-    await tokenBorrow
+    await daiToken
       .connect(Liquidator)
       .approve(liquidateContract.address, repayAmount);
     //Paying back
